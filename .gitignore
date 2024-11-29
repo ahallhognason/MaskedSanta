@@ -1,0 +1,37 @@
+# Binaries for programs and plugins
+*.exe
+
+# Test binary, builds, and executables
+*.test
+main
+MaskedSanta
+
+# Output of the go coverage tool
+*.out
+
+# Logs
+*.log
+
+# Dependency directories (vendor/)
+vendor/
+
+# IDE and editor settings
+.vscode/
+.idea/
+*.bak
+
+# OS generated files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Go modules
+go.sum
+
+# Temporary files
+*.tmp
+*.temp
+
+# Thoughts
+*.idea
+*.scratch

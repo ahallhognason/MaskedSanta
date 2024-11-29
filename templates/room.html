@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Room {{ .roomID }}</title>
+</head>
+<body>
+    <h1>Room {{ .roomID }}</h1>
+    <form action="/room/{{ .roomID }}/add-participant" method="POST">
+        <input type="text" name="name" placeholder="Name" required>
+        <input type="text" name="exclusions" placeholder="Exclusions (comma-separated)">
+        <button type="submit">Add Participant</button>
+    </form>
+    <ul>
+        {{ range .participants }}
+        <li>{{ .Name }} <a target="_blank" href="/participant/{{ .URLID }}">{{ .URLID }}</a></li>
+        {{ end }}
+    </ul>
+    <form action="/room/{{ .roomID }}/assign" method="GET">
+        <button type="submit" {{ if .assigned }}disabled{{ end }}>Assign Gifts</button>
+    </form>
+</body>
+</html>
