@@ -5,6 +5,7 @@ import (
 	"github.com/ahallhognason/MaskedSanta/models"
 	"sync"
 	"math/rand"
+	"log"
 
 	"github.com/gin-gonic/gin"
 )
@@ -41,6 +42,59 @@ func ShowRoom(c *gin.Context) {
 		return
 	}
 
+	c.HTML(http.StatusOK, "room_page.html", gin.H{
+		"roomID":       room.ID,
+		"participants": room.Participants,
+		"assigned":     room.Assigned,
+	})
+}
+
+func RemoveParticipant(c *gin.Context) {
+	roomID := c.Param("roomID")
+	urlID := c.Param("urlID")
+
+	roomsMutex.Lock()
+	room, exists := rooms[roomID]
+	roomsMutex.Unlock()
+
+	if !exists {
+		c.String(http.StatusNotFound, "Room not found")
+		return
+	}
+
+	found := false
+	newParticipants := make([]models.Participant, 0, len(room.Participants))
+	var removedParticipantName string
+	for _, participant := range room.Participants {
+		if participant.URLID == urlID {
+			found = true
+			removedParticipantName = participant.Name
+			continue
+		}
+		newParticipants = append(newParticipants, participant)
+	}
+	for i, participant := range newParticipants {
+		filteredExclusions := make([]string, 0, len(participant.Exclusions))
+		for _, exclusion := range participant.Exclusions {
+			if exclusion != removedParticipantName {
+				filteredExclusions = append(filteredExclusions, exclusion)
+			}
+		}
+
+		participant.Exclusions = filteredExclusions
+		newParticipants[i] = participant
+	}
+
+	if !found {
+		c.String(http.StatusNotFound, "Participant not found")
+		return
+	}
+
+	roomsMutex.Lock()
+	room.Participants = newParticipants
+	rooms[roomID] = room
+	roomsMutex.Unlock()
+
 	c.HTML(http.StatusOK, "room.html", gin.H{
 		"roomID":       room.ID,
 		"participants": room.Participants,
@@ -61,16 +115,22 @@ func AddParticipant(c *gin.Context) {
 	}
 
 	name := c.PostForm("name")
-	exclusions := c.PostFormArray("exclusions")
+	exclusions := c.PostFormArray("exclusions[]")
 
 	urlID := models.GenerateID()
 	participant := models.Participant{Name: name, Exclusions: exclusions, URLID: urlID}
+	log.Println(participant, exclusions)
 
 	roomsMutex.Lock()
 	room.Participants = append(room.Participants, participant)
 	roomsMutex.Unlock()
 
-	c.Redirect(http.StatusFound, "/room/"+roomID)
+	// c.Redirect(http.StatusFound, "/room/"+roomID)
+	c.HTML(http.StatusOK, "room.html", gin.H{
+		"roomID":       room.ID,
+		"participants": room.Participants,
+		"assigned":     room.Assigned,
+	})
 }
 
 func AssignGifts(c *gin.Context) {
@@ -132,7 +192,12 @@ func AssignGifts(c *gin.Context) {
 	room.Assigned = true
 	roomsMutex.Unlock()
 
-	c.Redirect(http.StatusFound, "/room/"+roomID)
+	// c.Redirect(http.StatusFound, "/room/"+roomID)
+	c.HTML(http.StatusOK, "room.html", gin.H{
+		"roomID":       room.ID,
+		"participants": room.Participants,
+		"assigned":     room.Assigned,
+	})
 }
 
 // Utility function to check if a string is in a list
